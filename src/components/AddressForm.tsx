@@ -1,54 +1,19 @@
-import { useEffect, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { Button, Col, Container, FloatingLabel, Form, Row, Stack } from 'react-bootstrap';
+import { CityRecord, GovData, StreetRecord, UserAddress } from '../types';
 
-type CityRecord = {
-	לשכה: string;
-	סמל_ישוב: string;
-	סמל_לשכת_מנא: string;
-	סמל_מועצה_אזורית: string;
-	שם_ישוב: string;
-	שם_ישוב_לועזי: string;
-	שם_מועצה: string | null;
-	שם_נפה: string;
-	_id: number;
-};
-
-type StreetRecord = {
-	_id: number;
-	סמל_ישוב: string;
-	שם_ישוב: string;
-	סמל_רחוב: string;
-	שם_רחוב: string;
-};
-
-type ResultData<T> = {
-	fields: Array<Object>;
-	include_total: boolean;
-	limit: number;
-	records: T;
-	record_format: string;
-	resource_id: string;
-	total: number;
-	total_estimation_threshold: number | null;
-	total_was_estimated: boolean;
-	_links: Object;
-};
-
-type GovData<U> = {
-	help: string;
-	result: ResultData<U>;
-	success: boolean;
-};
-
-function AddressForm() {
+function AddressForm(): JSX.Element {
 	const CITIES_URL =
 		'https://data.gov.il/api/3/action/datastore_search?resource_id=5c78e9fa-c2e2-4771-93ff-7f400a12f7ba&limit=5000';
 	const STREETS_URL =
 		'https://data.gov.il/api/3/action/datastore_search?resource_id=9ad3862c-8391-4b2f-84a4-2d4c68625f4b&limit=20000';
 	const [cities, setCities] = useState<string[]>([]); // Use state to manage the cities data
 	const [streets, setStreets] = useState<StreetRecord[]>([]);
-	const [userCity, setUserCity] = useState('');
-	const [userStreet, setUserStreet] = useState('');
+	const [userAddress, setUserAddress] = useState<UserAddress>({
+		city: '',
+		street: '',
+		homeNumber: '',
+	});
 
 	useEffect(() => {
 		async function fetchData() {
@@ -72,12 +37,12 @@ function AddressForm() {
 	useEffect(() => {
 		async function fetchData() {
 			try {
-				const response = await fetch(`${STREETS_URL}&q=${userCity}`);
+				const response = await fetch(`${STREETS_URL}&q=${userAddress.city}`);
 				const data: GovData<StreetRecord[]> = await response.json();
 				setStreets(
 					data.result.records
 						.filter((record: StreetRecord) => record.hasOwnProperty('שם_רחוב'))
-						.filter((record: StreetRecord) => record.שם_ישוב === userCity)
+						.filter((record: StreetRecord) => record.שם_ישוב === userAddress.city)
 						.sort((a: StreetRecord, b: StreetRecord) => a.שם_רחוב.localeCompare(b.שם_רחוב))
 				); // Update cities state with fetched data
 			} catch (e) {
@@ -86,18 +51,22 @@ function AddressForm() {
 			}
 		}
 		fetchData();
-		setUserStreet('');
-	}, [userCity]); // Fetch data on component mount
+		setUserAddress({ ...userAddress, street: '' });
+	}, [userAddress.city]); // Fetch data on component mount
+
+	function handleAddressSubmit(event: FormEvent<HTMLFormElement>): void {
+		localStorage.setItem('userAddress', JSON.stringify(userAddress));
+	}
 
 	return (
 		<Container className='my-4' dir='rtl' lang='he'>
-			<Form>
+			<Form onSubmit={handleAddressSubmit}>
 				<Stack gap={2}>
 					<Form.Select
 						required
 						title='select city'
 						onChange={(e) => {
-							setUserCity(e.target.value);
+							setUserAddress({ ...userAddress, city: e.target.value });
 						}}
 					>
 						<option value={''}>בחר עיר</option>
@@ -112,9 +81,9 @@ function AddressForm() {
 					<Form.Select
 						required
 						title='select street'
-						disabled={userCity === ''}
+						disabled={userAddress.city === ''}
 						onChange={(e) => {
-							setUserStreet(e.target.value);
+							setUserAddress({ ...userAddress, street: e.target.value });
 						}}
 					>
 						<option value={''}>בחר רחוב</option>
@@ -135,12 +104,19 @@ function AddressForm() {
 									required
 									title='home number'
 									placeholder='*מספר בית'
+									onChange={(e) => setUserAddress({ ...userAddress, homeNumber: e.target.value })}
 								/>
 							</FloatingLabel>
 						</Col>
 						<Col>
 							<FloatingLabel label='כניסה' controlId='entranceLabel' className='mb-3'>
-								<Form.Control type='text' pattern='[א-ת]' title='entrance' placeholder='בניסה' />
+								<Form.Control
+									type='text'
+									pattern='[א-ת]'
+									title='entrance'
+									placeholder='בניסה'
+									onChange={(e) => setUserAddress({ ...userAddress, entrance: e.target.value })}
+								/>
 							</FloatingLabel>
 						</Col>
 						<Col>
@@ -150,16 +126,21 @@ function AddressForm() {
 									pattern='[0-9]*'
 									title='apartment number'
 									placeholder='דירה'
+									onChange={(e) => setUserAddress({ ...userAddress, apratment: e.target.value })}
 								/>
 							</FloatingLabel>
 						</Col>
 					</Row>
 					<Row>
 						<Col xs='auto'>
-							<Button type='submit'>שלח</Button>
+							<Button type='submit'>אישור</Button>
 						</Col>
 						<Col xs='auto'>
-							<Button variant='outline-danger' type='reset' onClick={() => setUserCity('')}>
+							<Button
+								variant='outline-danger'
+								type='reset'
+								onClick={() => setUserAddress({ city: '', street: '', homeNumber: '' })}
+							>
 								איפוס
 							</Button>
 						</Col>
