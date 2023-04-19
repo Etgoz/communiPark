@@ -137,7 +137,7 @@ function AddressForm(): JSX.Element {
 						</Col>
 						<Col xs='auto'>
 							<Button
-								variant='outline-danger'
+								variant='outline-danger bg-light'
 								type='reset'
 								onClick={() => setUserAddress({ city: '', street: '', homeNumber: '' })}
 							>
