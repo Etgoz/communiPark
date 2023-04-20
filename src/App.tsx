@@ -10,7 +10,7 @@ function App() {
 	return (
 		<Container fluid className='bg-info bg-gradient bg-opacity-25 px-0'>
 			<HeadNavbar />
-			<Container>
+			<Container style={{ height: '75vh' }}>
 				<Routes>
 					<Route path='/' element={<HomePage />} />
 					<Route path='/my_parking' element={<AddressForm />} />

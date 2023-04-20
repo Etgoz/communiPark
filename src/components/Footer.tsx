@@ -56,7 +56,7 @@ export default function Footer() {
 				</Col>
 			</Row>
 			<Row>
-				<p className='text-center text-light m-0 small'>Copyright: &copy; Etay Gozlan 2023</p>
+				<p className='text-center text-light m-0 pt-1'>Copyright: &copy; Etay Gozlan 2023</p>
 			</Row>
 		</Container>
 	);
